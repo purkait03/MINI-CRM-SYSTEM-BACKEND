@@ -12,14 +12,16 @@ const createClient = asyncHandler(async (req, res) => {
 
 
     if (
-        [fullname, companyName, email, phone, address, leadStatus].some((field) => field?.toString().trim() === "")
+        [fullname, companyName, email, phone, address].some((field) => field?.toString().trim() === "")
     ) {
         throw new ApiError(400, "All required fields must be provided")
     }
 
-    const lead = ["New", "In Progress", "Converted", "Lost"]
-    if (!lead.includes(leadStatus)) {
-        throw new ApiError(400, "Invalid lead status")
+    if (leadStatus) {
+        const lead = ["New", "In Progress", "Converted", "Lost"]
+        if (!lead.includes(leadStatus)) {
+            throw new ApiError(400, "Invalid lead status")
+        }
     }
 
     const client = await Client.create({
@@ -384,6 +386,48 @@ const assignClient = asyncHandler(async (req, res) => { // taking user id as "us
     )
 })
 
+const updateLeadStatus = asyncHandler(async (req, res) => {
+    const { clientId } = req.params
+    const { leadStatus } = req.body
+
+    const client = await Client.findOne(
+        {
+            _id: clientId,
+            isDeleted: false
+        })
+
+    if (!client) {
+        throw new ApiError(404, "Client not found")
+    }
+
+    const isAdmin = req.user.role === "admin"
+    const isOwner = client.assignedTo?.toString() === req.user._id.toString()
+
+    if (!isAdmin && !isOwner) {
+        throw new ApiError(403, "You are not allowed to update this client's lead status")
+    }
+
+    if (!leadStatus || leadStatus.toString().trim() === "") {
+        throw new ApiError(400, "Lead must be provided")
+    }
+
+    if (
+        !["New", "In Progress", "Converted", "Lost"].includes(leadStatus)
+    ) {
+        throw new ApiError(400, "Invalid lead status")
+    }
+
+    client.leadStatus = leadStatus
+    await client.save()
+
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, { leadStatus: client.leadStatus }, "Lead updated successfully")
+        )
+})
+
 const deleteClient = asyncHandler(async (req, res) => {
     const { clientId } = req.params;
 
@@ -442,5 +486,6 @@ export {
     getAssignedClients,
     assignClient,
     deleteClient,
-    restoreClient
+    restoreClient,
+    updateLeadStatus
 }
