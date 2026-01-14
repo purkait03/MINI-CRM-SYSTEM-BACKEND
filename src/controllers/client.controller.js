@@ -307,7 +307,7 @@ const getClientById = asyncHandler(async (req, res) => {
     const { clientId } = req.params
 
 
-    const client = await Client.findById(clientId)
+    const client = await Client.findOne({ _id: clientId, isDeleted: false })
         .populate("assignedTo", "fullname email role avatar")
         .populate("createdBy", "fullname email role avatar")
 
@@ -332,13 +332,13 @@ const getAssignedClients = asyncHandler(async (req, res) => {
     const skip = (page - 1) * limit
 
     const [clients, totalClients] = await Promise.all([
-        Client.find({ assignedTo: req.user._id })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("createdBy", "fullname email role avatar"),
+        Client.find({ assignedTo: req.user._id, isDeleted: false })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("createdBy", "fullname email role avatar"),
 
-        Client.countDocuments({ assignedTo: req.user._id })
+        Client.countDocuments({ assignedTo: req.user._id, isDeleted: false })
     ])
 
     return res
@@ -354,10 +354,93 @@ const getAssignedClients = asyncHandler(async (req, res) => {
         )
 })
 
+const assignClient = asyncHandler(async (req, res) => { // taking user id as "userId" from req.body
+
+    const { clientId } = req.params
+    const { userId } = req.body
+
+    const client = await Client.findById(clientId)
+    if (!client) {
+        throw new ApiError(404, "Client not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (!["sales", "support"].includes(user.role)) {
+        throw new ApiError(
+            400,
+            "Client can only be assigned to sales or support"
+        );
+    }
+
+    client.assignedTo = user._id;
+    await client.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, client, "Client assigned successfully")
+    )
+})
+
+const deleteClient = asyncHandler(async (req, res) => {
+    const { clientId } = req.params;
+
+    const client = await Client.findOne({
+        _id: clientId,
+        isDeleted: false
+    });
+
+    if (!client) {
+        throw new ApiError(404, "Client not found");
+    }
+
+    const isAdmin = req.user.role === "admin";
+    const isOwner = client.assignedTo?.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isOwner) {
+        throw new ApiError(403, "You are not allowed to delete this client");
+    }
+
+    client.isDeleted = true;
+    client.deletedAt = new Date();
+    await client.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, null, "Client deleted successfully")
+    );
+});
+
+const restoreClient = asyncHandler(async (req, res) => {
+    const { clientId } = req.params;
+
+    const client = await Client.findOne({
+        _id: clientId,
+        isDeleted: true
+    });
+
+    if (!client) {
+        throw new ApiError(404, "Client not found or not deleted");
+    }
+
+    client.isDeleted = false;
+    client.deletedAt = null;
+    await client.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, client, "Client restored successfully")
+    );
+});
+
+
 export {
     createClient,
     getAllClients,
     updateClientDetails,
     getClientById,
-    getAssignedClients
+    getAssignedClients,
+    assignClient,
+    deleteClient,
+    restoreClient
 }

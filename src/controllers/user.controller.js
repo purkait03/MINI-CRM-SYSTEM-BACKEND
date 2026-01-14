@@ -173,13 +173,13 @@ const getAUser = asyncHandler(async (req, res) => {
     const [user, assignedClients, totalAssignedClient, createdClients, totalCreatedClient] = await Promise.all([
         User.findById(userId).select("-password -refreshToken"),
 
-        Client.find({ assignedTo: userId })
+        Client.find({ assignedTo: userId, isDeleted: false })
             .sort({ createdAt: -1 })
             .skip(skipAssigned)
             .limit(limit)
             .populate("createdBy", "fullname email role avatar"),
 
-        Client.countDocuments({ assignedTo: userId }),
+        Client.countDocuments({ assignedTo: userId, isDeleted: false }),
 
         Client.find({ createdBy: userId })
             .sort({ createdAt: -1 })
