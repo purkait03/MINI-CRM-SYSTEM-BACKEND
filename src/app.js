@@ -22,10 +22,12 @@ app.use(cookieParser())
 import authRouter from "./routes/auth.routes.js"
 import usersRouter from "./routes/user.routes.js"
 import clientRouter from "./routes/client.routes.js"
+import communicationRouter from "./routes/communication.routes.js"
 
 // route declaretion
 app.use("/api/v1/auth", authRouter)
 app.use("/api/v1/users", usersRouter)
 app.use("/api/v1/clients", clientRouter)
+app.use("/api/v1/communications", communicationRouter)
 
 export { app }
