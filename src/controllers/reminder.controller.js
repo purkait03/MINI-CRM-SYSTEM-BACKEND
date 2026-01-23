@@ -6,13 +6,25 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { Reminder } from "../models/reminder.model.js";
 
 
-const createReminder = asyncHandler(async (req, res)=>{
-    const {clientId, channel, subject, message, remindAt, status} = req.body
+const createReminder = asyncHandler(async (req, res) => {
+    const { clientId, channel, subject, message, remindAt, status } = req.body
 
     if (
-        [clientId, channel, message, remindAt].some((field)=> field.toString().trim() === "")
+        [clientId, channel, message, remindAt].some((field) => field.toString().trim() === "")
     ) {
         throw new ApiError(400, "All required fields must be provided")
+    }
+
+    if (
+        ["Email", "SMS"].includes(channel)
+    ) {
+        throw new ApiError(400, "Invalid channel")
+    }
+
+    if (channel === "Email") {
+        if (!subject) {
+            throw new ApiError(400, "Subject required for email")
+        }
     }
 
     if (status) {
@@ -45,14 +57,14 @@ const createReminder = asyncHandler(async (req, res)=>{
     })
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(200, reminder, "Reminder created successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, reminder, "Reminder created successfully")
+        )
 })
 
 
 
-export{
+export {
     createReminder
 }
