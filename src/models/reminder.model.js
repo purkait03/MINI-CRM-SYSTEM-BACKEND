@@ -14,6 +14,8 @@ const reminder = new Schema({
         require: true
     },
 
+    subject: String,
+
     message: {
         type: String,
         require: true
