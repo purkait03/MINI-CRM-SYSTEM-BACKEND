@@ -1,8 +1,8 @@
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponce";
-import { Client } from "../models/client.model"
-import { User } from "../models/user.model";
-import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponce.js";
+import { Client } from "../models/client.model.js"
+import { User } from "../models/user.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
 
 

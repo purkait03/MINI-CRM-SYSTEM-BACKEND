@@ -1,9 +1,9 @@
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponce";
-import { Client } from "../models/client.model"
-import { User } from "../models/user.model";
-import { asyncHandler } from "../utils/asyncHandler";
-import { Communication } from "../models/communication.model";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponce.js";
+import { Client } from "../models/client.model.js"
+import { User } from "../models/user.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { Communication } from "../models/communication.model.js";
 
 
 const createComm = asyncHandler(async (req, res)=>{
